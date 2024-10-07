@@ -1,0 +1,53 @@
+{% include 'layout.html' %}
+
+<div class="container">
+    <div class="card">
+        <div class="card-header">
+            Edit Student Performance
+        </div>
+        <div class="card-body">
+            <form method="post">
+                <!-- Student ID -->
+                <div class="form-group">
+                    <label>Student ID</label>
+                    <input type="text" class="form-control" name="student_id" value="{{performance.student_username}}" required>
+                </div>
+
+                <!-- Subject Name -->
+                <div class="form-group">
+                    <label>Subject</label>
+                    <input type="text" class="form-control" name="subject_name" value="{{performance.subject_name}}" required>
+                </div>
+
+                <!-- Exam Date -->
+                <div class="form-group">
+                    <label>Exam Date</label>
+                    <input type="date" class="form-control" name="exam_date" value="{{performance.exam_date}}" required>
+                </div>
+
+                <!-- Exam Type -->
+                <div class="form-group">
+                    <label>Exam Type</label>
+                    <select class="form-control" name="exam_type">
+                        <option {% if performance.exam_type == 'mid' %} selected="selected" {% endif %}>Midterm</option>
+                        <option {% if performance.exam_type == 'final' %} selected="selected" {% endif %}>Final</option>
+                        <option {% if performance.exam_type == 'quiz' %} selected="selected" {% endif %}>Quiz</option>
+                        <option {% if performance.exam_type == 'assignment' %} selected="selected" {% endif %}>Assignment</option>
+                    </select>
+                </div>
+
+                <!-- Performance Score -->
+                <div class="form-group">
+                    <label>Performance</label>
+                    <input type="number" class="form-control" name="performance" value="{{performance.performance}}" required>
+                </div>
+
+                <!-- Submit and Delete Buttons -->
+                <button type="submit" class="btn btn-primary">Edit Performance</button>
+                <button onclick="window.location.href='/dashboard/teacher/{{user.id}}/performance/{{performance.id}}'"
+                        type="button" class="btn btn-danger">Delete
+                    </button>
+            </form>
+        </div>
+    </div>
+</div>

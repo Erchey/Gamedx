@@ -1,0 +1,122 @@
+{% include 'layout.html' %}
+
+<div class="container">
+    <div class="card">
+        <div class="card-header">
+            Add Student Performance
+        </div>
+        <div class="card-body">
+            {% if msg %}
+            <div class="alert alert-danger">
+                {{ msg }}
+            </div>
+            {% endif %}
+            <form method="post">
+                <div class="form-group">
+                    <label>Student ID</label>
+                    <input type="text" class="form-control" name="student_id" required>
+                </div>
+                <div class="form-row">
+                    
+                        <label for="subjectSelect">Subjects:</label>
+                        <select id="subjectSelect" class="form-control" name="subject" >
+                            <option value="">Select a subject</option>
+                            <option value="Agricultural Science">Agricultural Science</option>
+                            <option value="Air Conditioning And Refrigeration">Air Conditioning And Refrigeration</option>
+                            <option value="Animal Husbandry">Animal Husbandry</option>
+                            <option value="Arabic">Arabic</option>
+                            <option value="Auto body repair And Spray painting">Auto body repair And Spray painting</option>
+                            <option value="Auto Electrical Works">Auto Electrical Works</option>
+                            <option value="Auto Mechanical Works">Auto Mechanical Works</option>
+                            <option value="Auto Mechanics">Auto Mechanics</option>
+                            <option value="Automobile Parts Merchandising">Automobile Parts Merchandising</option>
+                            <option value="Autopart Merchandizing">Autopart Merchandizing</option>
+                            <option value="Basic Electricity">Basic Electricity</option>
+                            <option value="Basic Electronics">Basic Electronics</option>
+                            <option value="Biology">Biology</option>
+                            <option value="Block laying, Brick laying & Concrete Works">Block laying, Brick laying & Concrete Works</option>
+                            <option value="Book Keeping">Book Keeping</option>
+                            <option value="Building Construction">Building Construction</option>
+                            <option value="Carpentry and Joinery">Carpentry and Joinery</option>
+                            <option value="Catering and Craft Practice">Catering and Craft Practice</option>
+                            <option value="Chemistry">Chemistry</option>
+                            <option value="Christian Religious Studies">Christian Religious Studies</option>
+                            <option value="Civic Education (Senior)">Civic Education (Senior)</option>
+                            <option value="Clothing & Textiles">Clothing & Textiles</option>
+                            <option value="Commerce">Commerce</option>
+                            <option value="Computer & IT">Computer & IT</option>
+                            <option value="Cosmetology">Cosmetology</option>
+                            <option value="Data Processing">Data Processing</option>
+                            <option value="Dyeing And Bleaching">Dyeing And Bleaching</option>
+                            <option value="Economics">Economics</option>
+                            <option value="Electrical Installation And Maintenance Work">Electrical Installation And Maintenance Work</option>
+                            <option value="English Language">English Language</option>
+                            <option value="Financial Accounting">Financial Accounting</option>
+                            <option value="Fisheries">Fisheries</option>
+                            <option value="Foods & Nutrition">Foods & Nutrition</option>
+                            <option value="French Language">French Language</option>
+                            <option value="Furniture Making">Furniture Making</option>
+                            <option value="Further Mathematics">Further Mathematics</option>
+                            <option value="Garment Making">Garment Making</option>
+                            <option value="General Mathematics">General Mathematics</option>
+                            <option value="Geography">Geography</option>
+                            <option value="Government">Government</option>
+                            <option value="GSM Maintenance And Repairs">GSM Maintenance And Repairs</option>
+                            <option value="Health Education">Health Education</option>
+                            <option value="History">History</option>
+                            <option value="Home Management">Home Management</option>
+                            <option value="Igbo Language">Igbo Language</option>
+                            <option value="Insurance">Insurance</option>
+                            <option value="Islamic Studies">Islamic Studies</option>
+                            <option value="Keyboarding">Keyboarding</option>
+                            <option value="Leather Goods">Leather Goods</option>
+                            <option value="Literature-in-English">Literature-in-English</option>
+                            <option value="Machine Woodworking">Machine Woodworking</option>
+                            <option value="Marketing">Marketing</option>
+                            <option value="Metal Work">Metal Work</option>
+                            <option value="Mining">Mining</option>
+                            <option value="Music">Music</option>
+                            <option value="Office Practice">Office Practice</option>
+                            <option value="Painting And Decoration">Painting And Decoration</option>
+                            <option value="Photography">Photography</option>
+                            <option value="Physical Education">Physical Education</option>
+                            <option value="Physics">Physics</option>
+                            <option value="Plumbing And Pipe Fitting">Plumbing And Pipe Fitting</option>
+                            <option value="Printing Craft Practice">Printing Craft Practice</option>
+                            <option value="Radio Television and Electrical Work">Radio Television and Electrical Work</option>
+                            <option value="Radio Television And Repairs">Radio Television And Repairs</option>
+                            <option value="Salesmanship">Salesmanship</option>
+                            <option value="Store Keeping">Store Keeping</option>
+                            <option value="Store Management">Store Management</option>
+                            <option value="Technical Drawings">Technical Drawings</option>
+                            <option value="Textile trade">Textile trade</option>
+                            <option value="Tie And Dye Craft">Tie And Dye Craft</option>
+                            <option value="Tourism">Tourism</option>
+                            <option value="Upholstery">Upholstery</option>
+                            <option value="Visual Art">Visual Art</option>
+                            <option value="Welding & Fabrication">Welding & Fabrication</option>
+                            <option value="Wood-Work">Wood-Work</option>
+                            <option value="Yoruba Language">Yoruba Language</option>
+                        </select>
+                    
+                </div>              
+                <div class="form-group">
+                    <label>Exam Type</label>
+                    <input type="text" class="form-control" name="exam_type" required>
+                </div>
+                <div class="form-group">
+
+                    <label for="exam_date">Exam Date (DD-MM-YYYY)</label>
+                    
+                    <input type="text" class="form-control" name="exam_date" placeholder="DD-MM-YYYY" required>
+                    
+                </div>
+                <div class="form-group">
+                    <label>Performance</label>
+                    <input type="number" class="form-control" name="performance" min="0" max="100" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Add Student Performance</button>
+            </form>
+        </div>
+    </div>
+</div>

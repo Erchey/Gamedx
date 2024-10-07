@@ -1,0 +1,46 @@
+{% include 'layout.html' %}
+
+<div class="container">
+    <div class="card text-center">
+        <div class="card-header">
+            <b>Teacher Dashboard</b>
+        </div>
+        <div class="card-body">
+            <h5 class="card-title">Your Students' Performance Metrics!</h5>
+            <p class="card-text">Information regarding your performance data</p>
+
+            <table class="table table-hover">
+                <thead>
+                <tr>
+                    <th scope="col">#</th>
+                    <th scope="col">Student</th>
+                    <th scope="col">Exam Date</th>
+                    <th scope="col">Subject</th>
+                    <th scope="col">Exam Type</th>
+                    <th scope="col">Score</th>
+                </tr>
+                </thead>
+                <tbody>
+                    {% for performance in performances %}
+                    <tr class="{% if performance.performance < 50 %}table-danger{% elif performance.performance >= 70 %}table-success{% else %}table-warning{% endif %}">
+                        <td>{{ loop.index }}</td>
+                        <td>{{ performance.student_username }}</td>
+                        <td>{{ performance.exam_date }}</td>
+                        <td>{{ performance.subject_name }}</td>  <!-- Display subject name -->
+                        <td>{{ performance.exam_type | capitalize }}</td>
+                        <td>{{ performance.performance }}%</td>
+                        <td>
+                            <button onclick="window.location.href='{{ user.id }}/edit-performance/{{performance.id}}'"
+                                    type="button" class="btn btn-info">
+                                Edit
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <a href="/dashboard/teacher/{{ user.id }}/add-performance" class="btn btn-primary">Add a new Performance Metric!</a>
+        </div>
+    </div>
+</div>

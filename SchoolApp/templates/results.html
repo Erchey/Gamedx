@@ -1,0 +1,38 @@
+{% include 'layout.html' %}
+
+<div class="container">
+    <div class="card text-center">
+        <div class="card-header">
+            <b>BadBoys High School Performance Dashboard</b>
+        </div>
+        <div class="card-body">
+            <h5 class="card-title">Here are your results, {{ user.firstname }}!</h5>
+            <p class="card-text">Here's a breakdown of your academic performance:</p>
+
+            <table class="table table-hover">
+                <thead>
+                <tr>
+                    <th scope="col">#</th>
+                    <th scope="col">Exam Date</th>
+                    <th scope="col">Subject</th>
+                    <th scope="col">Exam Type</th>
+                    <th scope="col">Performance (%)</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for performance, subject in performances %}
+                <tr class="{% if performance.performance < 50 %}table-danger{% elif performance.performance >= 70 %}table-success{% else %}table-warning{% endif %}">
+                    <td>{{ loop.index }}</td>
+                    <td>{{ performance.exam_date }}</td>
+                    <td>{{ subject.subject_name }}</td>
+                    <td>{{ performance.exam_type | capitalize }}</td>
+                    <td>{{ performance.performance }}%</td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+
+            <a href="javascript:void(0)" class="btn btn-primary" onclick="window.location.reload()">Refresh</a>
+        </div>
+    </div>
+</div>
