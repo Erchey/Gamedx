@@ -17,6 +17,7 @@ class Students(Base):
     guardian_mail = Column(String)
     guardian_phone = Column(String)
     state_of_birth = Column(String)
+    study_hours = Column(Integer)
     
 
 class Teachers(Base):

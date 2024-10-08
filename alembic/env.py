@@ -6,6 +6,14 @@ from sqlalchemy import pool
 
 from alembic import context
 from SchoolApp.models import Base
+from dotenv import load_dotenv
+
+load_dotenv(os.path.join(os.path.dirname(os.path.dirname(__file__)), 'keys.env'))
+
+database_url = os.getenv('DATABASE_URL')
+
+if not database_url:
+    raise Exception("DATABASE_URL environment variable is not set")
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -27,9 +35,6 @@ target_metadata = Base.metadata
 # my_important_option = config.get_main_option("my_important_option")
 # ... etc.
 
-database_url = os.getenv("DATABASE_URL")
-if database_url is None:
-    raise Exception("DATABASE_URL environment variable is not set")
 
 config.set_main_option("sqlalchemy.url", database_url)
 
