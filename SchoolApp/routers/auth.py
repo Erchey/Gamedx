@@ -230,7 +230,7 @@ async def login(request: Request, db: Session = Depends(get_db)):
     try:
         # Validate user cookie and create access token
         token_expires = timedelta(minutes=60)
-        token = create_access_token(teacher_auth.username, teacher_auth.id, teacher_auth.first_name, expires_delta=token_expires)
+        token = create_access_token(teacher_auth.username, teacher_auth.id, teacher_auth.first_name, teacher_auth.id, expires_delta=token_expires)
 
         # Set the token as a cookie in the response
         response.set_cookie(key="access_token", value=token, httponly=True)

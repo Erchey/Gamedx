@@ -91,7 +91,8 @@ async def student_dashboard(request: Request, student_id: int, db: Session = Dep
     return templates.TemplateResponse("results.html", {
         "request": request,
         "performances": performance_records,  # Use plural to indicate multiple records
-        "user": user
+        "user": user,
+        "msg": None
     })
 
 
@@ -261,7 +262,7 @@ async def create_performance(request: Request, student_id: str = Form(...),
         # Add performance to the database
         db.add(performance_model)
         db.commit()
-        msg = "Student Performance successfully created"
+        msg = "Student Performance successfully added!"
     except Exception as e:
         # Rollback in case of error and render the template with an error message
         db.rollback()
@@ -293,7 +294,6 @@ async def edit_performance(request: Request, performance_id: int, db: db_depende
         "performance": performance, 
         "user": user
     })
-
 
 
 @router.post("/teacher/{teacher_id}/edit-performance/{performance_id}", response_class=HTMLResponse)
@@ -329,7 +329,6 @@ async def edit_performance_commit(request: Request, performance_id: int, student
             "user": user,
             "performance": None
         })
- 
 
     # Convert the exam_date to a datetime object (HTML5 date input is typically in YYYY-MM-DD)
     try:
@@ -359,13 +358,8 @@ async def edit_performance_commit(request: Request, performance_id: int, student
         # Commit changes to the database
         db.commit()  # No need for db.add() or db.flush() here
         
-      
-        return templates.TemplateResponse("edit-performance.html", {
-            "request": request,
-            "msg": "Performance record updated successfully.",
-            "performance": performance_model,
-            "user": user
-        })
+        # After successful update, redirect to the teacher dashboard
+        return RedirectResponse(url=f'/dashboard/teacher/{teacher_id}', status_code=status.HTTP_302_FOUND)
 
     except Exception as e:
         db.rollback()
@@ -377,18 +371,24 @@ async def edit_performance_commit(request: Request, performance_id: int, student
             "user": user
         })
 
-    return RedirectResponse(url=f'/dashboard/teacher/{teacher_id}', status_code=status.HTTP_302_FOUND)
 
 
 @router.post("/teacher/{teacher_id}/performance/{performance_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_performance(user: user_dependency, db: db_dependency, performance_id: int = Path(gt=0)):
-
+async def delete_performance(
+    user: user_dependency,
+    db: db_dependency,
+    performance_id: int = Path(gt=0),
+    teacher_id: int = Path(gt=0)
+):
     # Check for authentication
     if user is None:
         raise HTTPException(status_code=401, detail="Authentication Failed")
 
     # Query to find the performance record by ID and teacher ID
-    performance_model = db.query(Performance).filter(Performance.id == performance_id).filter(Performance.teacher_id == user.get('id')).first()
+    performance_model = db.query(Performance).filter(
+        Performance.id == performance_id,
+        Performance.teacher_id == user.get('id')
+    ).first()
 
     # Check if the performance record exists
     if performance_model is None:
@@ -398,7 +398,10 @@ async def delete_performance(user: user_dependency, db: db_dependency, performan
     try:
         db.delete(performance_model)  # Delete the performance record
         db.commit()  
-        return JSONResponse(status_code=status.HTTP_204_NO_CONTENT)  # Return 204 No Content on success
+        
+        # Redirect to the teacher dashboard after successful deletion
+        return RedirectResponse(url=f'/dashboard/teacher/{teacher_id}', status_code=status.HTTP_302_FOUND)
+    
     except Exception as e:
         db.rollback()  # Rollback in case of error
         raise HTTPException(status_code=500, detail=f"Error occurred: {str(e)}")

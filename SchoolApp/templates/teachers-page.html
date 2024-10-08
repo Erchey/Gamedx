@@ -5,6 +5,17 @@
         <div class="card-header">
             <b>Teacher Dashboard</b>
         </div>
+        {% if msg %} 
+           {% if msg == 'Student Performance successfully added!' %}
+           <div class="alert alert-success" role="alert">
+                {{msg}}
+           </div>
+           {% else %}
+           <div class="alert alert-danger" role="alert">
+                {{msg}}
+           </div>
+           {% endif %}
+           {% endif %}
         <div class="card-body">
             <h5 class="card-title">Your Students' Performance Metrics!</h5>
             <p class="card-text">Information regarding your performance data</p>
@@ -41,6 +52,7 @@
             </table>
 
             <a href="/dashboard/teacher/{{ user.id }}/add-performance" class="btn btn-primary">Add a new Performance Metric!</a>
+            <a href="javascript:void(0)" class="btn btn-primary" onclick="window.location.reload()">Refresh</a>
         </div>
     </div>
 </div>

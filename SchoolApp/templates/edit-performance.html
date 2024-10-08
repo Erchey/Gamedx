@@ -2,21 +2,22 @@
 
 <div class="container">
     <div class="card">
+        {% if msg %} 
+            {% if msg == 'Performance record updated successfully.' %}
+            <div class="alert alert-success" role="alert">
+                {{msg}}
+            </div>
+            {% else %}
+            <div class="alert alert-danger" role="alert">
+                {{msg}}
+            </div>
+            {% endif %}
+        {% endif %}
+
         <div class="card-header">
             Edit Student Performance
         </div>
-        {% if msg %} 
-           {% if msg == 'Performance record updated successfully' %}
-           <div class="alert alert-success" role="alert">
-                {{msg}}
-           </div>
-           {% else %}
-           <div class="alert alert-danger" role="alert">
-                {{msg}}
-           </div>
-           {% endif %}
-           {% endif %}
-
+       
         <div class="card-body">
             <form method="post" action="/dashboard/teacher/{{user.id}}/edit-performance/{{performance.id}}">
                 <!-- Student ID -->
