@@ -5,14 +5,25 @@
         <div class="card-header">
             Edit Student Performance
         </div>
+        {% if msg %} 
+           {% if msg == 'Performance record updated successfully' %}
+           <div class="alert alert-success" role="alert">
+                {{msg}}
+           </div>
+           {% else %}
+           <div class="alert alert-danger" role="alert">
+                {{msg}}
+           </div>
+           {% endif %}
+           {% endif %}
+
         <div class="card-body">
-            <form method="post">
+            <form method="post" action="/dashboard/teacher/{{user.id}}/edit-performance/{{performance.id}}">
                 <!-- Student ID -->
                 <div class="form-group">
                     <label>Student ID</label>
                     <input type="text" class="form-control" name="student_id" value="{{performance.student_username}}" required>
                 </div>
-
                 <!-- Subject Name -->
                 <div class="form-group">
                     <label>Subject</label>
@@ -33,6 +44,8 @@
                         <option {% if performance.exam_type == 'final' %} selected="selected" {% endif %}>Final</option>
                         <option {% if performance.exam_type == 'quiz' %} selected="selected" {% endif %}>Quiz</option>
                         <option {% if performance.exam_type == 'assignment' %} selected="selected" {% endif %}>Assignment</option>
+                        <option {% if performance.exam_type == 'mock' %} selected="selected" {% endif %}>Mock</option>
+                        <option {% if performance.exam_type == 'wassce' %} selected="selected" {% endif %}>WASSCE</option>
                     </select>
                 </div>
 
@@ -44,10 +57,14 @@
 
                 <!-- Submit and Delete Buttons -->
                 <button type="submit" class="btn btn-primary">Edit Performance</button>
-                <button onclick="window.location.href='/dashboard/teacher/{{user.id}}/performance/{{performance.id}}'"
-                        type="button" class="btn btn-danger">Delete
-                    </button>
             </form>
-        </div>
+        </div>   
+            <!-- Delete Button -->
+            
+            <div class="card"></div>
+            <form method="post" action="/dashboard/teacher/{{user.id}}/performance/{{performance.id}}">
+                <button type="submit" class="btn btn-danger">Delete</button>
+            </form></div>
+       
     </div>
 </div>

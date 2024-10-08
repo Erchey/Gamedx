@@ -49,14 +49,22 @@ class Performance(Base):
     __tablename__ = 'performance'
 
     id = Column(Integer, primary_key=True, index=True)
-    student_id = Column(Integer, ForeignKey("students.id"))
-    student_username = Column(String, ForeignKey("students.username"))
-    subject_name = Column(String, ForeignKey("subjects.subject_name"))
-    subject_id = Column(Integer, ForeignKey("subjects.id"))
-    teacher_id = Column(Integer, ForeignKey("teachers.id"))
-    exam_type = Column(String(50))
+    student_id = Column(Integer, ForeignKey('students.id'))
+    subject_id = Column(Integer, ForeignKey('subjects.id'))
+    student_username = Column(String)
+    subject_name = Column(String)
+    teacher_id = Column(Integer, ForeignKey('teachers.id'))
     exam_date = Column(Date)
+    exam_type = Column(String)
     performance = Column(Integer)
+
+    def __repr__(self):
+        return (f"<Performance(id={self.id}, student_id={self.student_id}, "
+                f"subject_id={self.subject_id}, student_username='{self.student_username}', "
+                f"subject_name='{self.subject_name}', teacher_id={self.teacher_id}, "
+                f"exam_date='{self.exam_date}', exam_type='{self.exam_type}', "
+                f"performance={self.performance})>")
+
 
 
 class StudyHours(Base):

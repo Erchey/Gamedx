@@ -7,7 +7,7 @@ from datetime import datetime
 from starlette import status
 from starlette.responses import RedirectResponse
 from typing import Annotated, List, Optional
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, validator
 from sqlalchemy.orm import Session
 from fastapi import Depends, APIRouter, Form, HTTPException, Path, Request, File, UploadFile
 from starlette import status
@@ -15,8 +15,9 @@ from SchoolApp import models
 from ..models import Performance, Students, Subjects, Teachers
 from ..database import SessionLocal, engine
 from .auth import get_current_user
+from datetime import datetime, date
 
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 
 router = APIRouter(
@@ -40,13 +41,16 @@ db_dependency = Annotated[Session, Depends(get_db)]
 user_dependency = Annotated[dict, Depends(get_current_user)]
 
 class PerformanceRequest(BaseModel):
-    student_id: int
-    subject_id: int
-    teacher_id: int
-    exam_id: int
-    exam_date: int
+    id: Optional[int] = Field(default=None, description="ID of the performance record, automatically generated if not provided.")
+    student_id: int = Field(..., description="ID of the student")
+    student_username: str = Field(..., description="Username of the student")
+    subject_name: str = Field(..., description="Name of the subject")
+    subject_id: int = Field(..., description="ID of the subject")
+    teacher_id: int = Field(..., description="ID of the teacher")
+    exam_date: date = Field(..., description="Date of the exam in DD-MM-YYYY format")
     exam_type: str = Field(..., description="Type of the exam, case insensitive")
-    performance: int = Field(gt=0, lt=101)
+    performance: int = Field(..., gt=0, lt=101, description="Performance score between 1 and 100")
+
 
     # Override the model's initialization to ensure exam_type is stored in lowercase
     def __init__(self, **data):
@@ -205,12 +209,12 @@ async def create_performance(request: Request, student_id: str = Form(...),
 
     # Convert the exam_date to a datetime object
     try:
-        exam_date = datetime.strptime(exam_date, "%d-%m-%Y").date()
+        exam_date = datetime.strptime(exam_date, "%Y-%m-%d").date()
     except ValueError:
         # If date format is invalid, return the form with an error message
         return templates.TemplateResponse("add-performance.html", {
             "request": request,
-            "msg": "Invalid date format. Use DD-MM-YYYY.",
+            "msg": "Invalid date format. Use YYYY-MM-DD.",
             "user": user
         })
 
@@ -273,7 +277,7 @@ async def create_performance(request: Request, student_id: str = Form(...),
 
 
 @router.get("/teacher/{teacher_id}/edit-performance/{performance_id}", response_class=HTMLResponse)
-async def edit_performance(request: Request, performance_id: int, db: Session = Depends(get_db)):
+async def edit_performance(request: Request, performance_id: int, db: db_dependency):
     user = await get_current_user(request)
     if user is None:
         return RedirectResponse(url="/auth", status_code=status.HTTP_302_FOUND)
@@ -302,35 +306,20 @@ async def edit_performance_commit(request: Request, performance_id: int, student
     if user is None:
         return RedirectResponse(url="/auth", status_code=status.HTTP_302_FOUND)
 
-    # Query the database to get the corresponding IDs based on names
+    # Fetch related entries
     student = db.query(models.Students).filter(models.Students.username == student_id).first()
     subject = db.query(models.Subjects).filter(models.Subjects.subject_name == subject_name).first()
     teacher = db.query(models.Teachers).filter(models.Teachers.id == teacher_id).first()
 
-    # Handle cases where any of the entries is not found
-    if not student:
+    if not student or not subject or not teacher:
         return templates.TemplateResponse("edit-performance.html", {
             "request": request,
-            "msg": "Student not found",
-            "user": user,
-            "performance": None
-        })
-    if not subject:
-        return templates.TemplateResponse("edit-performance.html", {
-            "request": request,
-            "msg": "Subject not found",
-            "user": user,
-            "performance": None
-        })
-    if not teacher:
-        return templates.TemplateResponse("edit-performance.html", {
-            "request": request,
-            "msg": "Teacher not found",
+            "msg": "Student, subject, or teacher not found.",
             "user": user,
             "performance": None
         })
 
-    # Retrieve the existing performance record
+    # Fetch the performance record to update
     performance_model = db.query(models.Performance).filter(models.Performance.id == performance_id).first()
 
     if not performance_model:
@@ -340,54 +329,58 @@ async def edit_performance_commit(request: Request, performance_id: int, student
             "user": user,
             "performance": None
         })
+ 
 
-    # Convert the exam_date to a datetime object
+    # Convert the exam_date to a datetime object (HTML5 date input is typically in YYYY-MM-DD)
     try:
-        exam_date = datetime.strptime(exam_date, "%d-%m-%Y").date()
+        exam_date = datetime.strptime(exam_date, "%Y-%m-%d").date()  # Changed to the correct format
     except ValueError:
         return templates.TemplateResponse("edit-performance.html", {
             "request": request,
-            "msg": "Invalid date format. Use DD-MM-YYYY.",
+            "msg": "Invalid date format. Use YYYY-MM-DD.",
             "user": user,
-            "performance": performance_model  # Make sure performance is passed
+            "performance": performance_model
         })
-    
+
     # Update the performance record with new data
     performance_model.student_id = student.id
     performance_model.subject_id = subject.id
     performance_model.student_username = student.username  # Fix field name
     performance_model.subject_name = subject.subject_name
     performance_model.teacher_id = teacher.id
-    performance_model.exam_date = exam_date  # Use the converted datetime object
-    performance_model.exam_type = exam_type.lower()  # Convert exam type to lowercase
+    performance_model.exam_date = exam_date 
+    performance_model.exam_type = exam_type.lower()  
     performance_model.performance = performance
 
+    # Log updated performance model
+    print(f"Updated performance: {performance_model}")
+
     try:
-        # Commit the updated data to the database
-        db.commit()
+        # Commit changes to the database
+        db.commit()  # No need for db.add() or db.flush() here
+        
+      
         return templates.TemplateResponse("edit-performance.html", {
             "request": request,
             "msg": "Performance record updated successfully.",
             "performance": performance_model,
             "user": user
         })
-        
+
     except Exception as e:
-        # Rollback the transaction in case of error
         db.rollback()
+        print(f"Error occurred: {str(e)}")
         return templates.TemplateResponse("edit-performance.html", {
             "request": request,
             "msg": f"Error occurred: {str(e)}",
-            "performance": performance_model,  # Pass performance even in case of error
+            "performance": performance_model,
             "user": user
         })
 
-    # Redirect on success
-    return RedirectResponse(url=f'/dashboard/teacher/{teacher.id}', status_code=status.HTTP_302_FOUND)
+    return RedirectResponse(url=f'/dashboard/teacher/{teacher_id}', status_code=status.HTTP_302_FOUND)
 
 
-
-@router.delete("/teacher/{teacher_id}/performance/{performance_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.post("/teacher/{teacher_id}/performance/{performance_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_performance(user: user_dependency, db: db_dependency, performance_id: int = Path(gt=0)):
 
     # Check for authentication
@@ -404,7 +397,7 @@ async def delete_performance(user: user_dependency, db: db_dependency, performan
     # Perform deletion
     try:
         db.delete(performance_model)  # Delete the performance record
-        db.commit()  # Commit changes to the database
+        db.commit()  
         return JSONResponse(status_code=status.HTTP_204_NO_CONTENT)  # Return 204 No Content on success
     except Exception as e:
         db.rollback()  # Rollback in case of error

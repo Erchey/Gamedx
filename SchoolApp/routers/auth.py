@@ -252,7 +252,7 @@ async def register_user(request: Request, email: str = Form(...), username: str 
                         firstname: str = Form(...), lastname: str = Form(...),
                         password: str = Form(...), password2: str = Form(...), gender: str = Form(...),
                         age: int = Form(...), g_name: str = Form(...), g_mail: str = Form(...),
-                        g_phone: str = Form(...),
+                        g_phone: str = Form(...), state: str = Form(...),
                         db: Session = Depends(get_db)):
 
     validation1 = db.query(models.Students).filter(models.Students.username == username).first()
@@ -273,6 +273,7 @@ async def register_user(request: Request, email: str = Form(...), username: str 
     user_model.guardian_name = g_name
     user_model.guardian_mail = g_mail
     user_model.guardian_phone = g_phone
+    user_model.state_of_origin = state
     
 
     hash_password = get_password_hash(password)
