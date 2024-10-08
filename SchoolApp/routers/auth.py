@@ -102,8 +102,11 @@ def authenticate_teacher(username: str, password: str, db):
     return teacher  # Return the teacher object
 
 
-def create_access_token(username: str, user_id: int, firstname: str, expires_delta: Optional[timedelta] = None):
-    encode = {"sub": username, "id": user_id, "firstname": firstname}
+def create_access_token(username: str, user_id: int, firstname: str, studyhours: Optional[int], expires_delta: Optional[timedelta] = None):
+    # Handle null studyhours
+    studyhours = studyhours if studyhours is not None else 0
+    
+    encode = {"sub": username, "id": user_id, "firstname": firstname, "studyhours": studyhours}
     if expires_delta:
         expire = datetime.now(timezone.utc) + expires_delta
     else:
@@ -122,11 +125,12 @@ async def get_current_user(request: Request):
         username: str = payload.get("sub")
         user_id: int = payload.get("id")
         firstname: str = payload.get("firstname")
+        studyhours: int = payload.get("studyhours")
         
         if username is None or user_id is None:
             return None
         
-        return {"username": username, "id": user_id, "firstname": firstname}
+        return {"username": username, "id": user_id, "firstname": firstname, "studyhours": studyhours}
     except JWTError:
         return None
 
@@ -138,7 +142,7 @@ async def login_for_access_token(response: Response, form_data: OAuth2PasswordRe
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Incorrect username or password")
     
     token_expires = timedelta(minutes=60)
-    token = create_access_token(user.username, user.id, user.first_name, expires_delta=token_expires)
+    token = create_access_token(user.username, user.id, user.first_name, user.study_hours, expires_delta=token_expires)
 
     # Set the token as a cookie in the response
     response.set_cookie(key="access_token", value=token, httponly=True)

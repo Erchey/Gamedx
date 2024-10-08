@@ -7,7 +7,7 @@
         </div>
         <div class="card-body">
             <h5 class="card-title">Hello {{ user.firstname }}!</h5>
-            <p class="card-text">Data science shiii (like your results has been dropping a bit lately)</p>
+            <p class="card-text">Your current average weekly study time is {{ user.studyhours or 0 }} hours.</p>
 
            
             <a href="/dashboard/student/{{ user.id }}/results" class="btn btn-primary">View Results</a>
