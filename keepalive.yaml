@@ -1,0 +1,30 @@
+name: Keep Server and Database Alive
+
+on:
+  schedule:
+    - cron: "*/15 * * * *"  
+
+jobs:
+  keep-alive:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Install Python dependencies
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+
+
+      - name: Install dependencies
+        run: |
+          python -m pip install psycopg2-binary
+
+
+      - name: Send ping to server
+        run: |
+          curl -X GET https://gamedx.onrender.com/
+
+      - name: Keep the database alive
+        run: |
+          python3 /SchoolApp/keepalive.py

@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- Required meta tags -->
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', path='/todo/css/base.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', path='/todo/css/bootstrap.css') }}">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <title>BadBoysHighStudentApp</title>
+
+</head>
+<body>
+
+    <div>
+        <nav class="navbar navbar-expand-md navbar-dark main-color fixed-top">
+            <a class="navbar-brand" href="/dashboard/teacher/{{user.id}}">StudentApp</a>
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav"
+                    aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                    {% if user %}
+                    <li class="nav-item active">
+                        <a class="nav-link" href="/dashboard/teacher/{{user.id}}">Home </a>
+                    </li>
+                    {% endif %}
+                </ul>
+    
+                <ul class="navbar-nav ml-auto">
+                    {% if user %}
+                    <li class="nav-item m-1">
+                        <a type="button" class="btn btn-outline-light" href="/users/edit-password">Edit User</a>
+                    </li>
+                    <li class="nav-item m-1">
+                        <a type="button" class="btn btn-outline-light" href="/auth/logout">Logout</a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </nav>
+    </div>
+
+{% block content %}
+
+{% endblock %}
+
+
+<script src="{{ url_for('static', path='/todo/js/jquery-slim.js') }}"></script>
+<script src="{{ url_for('static', path='/todo/js/popper.js') }}"></script>
+<script src="{{ url_for('static', path='/todo/js/bootstrap.js') }}"></script>
+</body>
+</html>

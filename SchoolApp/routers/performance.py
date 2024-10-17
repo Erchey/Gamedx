@@ -58,7 +58,7 @@ class PerformanceRequest(BaseModel):
         self.exam_type = self.exam_type.lower()
 
 @router.get('/student/{student_id}', response_class=HTMLResponse)
-async def student_dashboard(request: Request, student_id: int, db: Session = Depends(get_db)):
+async def student_dashboard(request: Request, student_id: int, db: db_dependency):
     user = await get_current_user(request)
     if user is None:
         return RedirectResponse(url="/auth", status_code=status.HTTP_302_FOUND)
@@ -76,7 +76,7 @@ async def student_dashboard(request: Request, student_id: int, db: Session = Dep
 
 
 @router.get('/student/{student_id}/results', response_class=HTMLResponse)
-async def student_dashboard(request: Request, student_id: int, db: Session = Depends(get_db)):
+async def student_dashboard(request: Request, student_id: int, db: db_dependency):
     user = await get_current_user(request)
     if user is None:
         return RedirectResponse(url="/auth", status_code=status.HTTP_302_FOUND)
@@ -98,7 +98,7 @@ async def student_dashboard(request: Request, student_id: int, db: Session = Dep
 
 
 @router.get('/teacher/{teacher_id}', response_class=HTMLResponse)
-async def teacher_dashboard(request: Request, teacher_id: int, db: Session = Depends(get_db)):
+async def teacher_dashboard(request: Request, teacher_id: int, msg: str = None, db: Session = Depends(get_db)):
     user = await get_current_user(request)  # Ensure this function is async
     if user is None:
         return RedirectResponse(url="/auth", status_code=status.HTTP_302_FOUND)
@@ -120,71 +120,14 @@ async def teacher_dashboard(request: Request, teacher_id: int, db: Session = Dep
         "request": request, 
         "performances": performance_records,
         "subject": subject,  # This will pass the subject to the template
-        "user": user
+        "user": user,
+        "msg": msg
     })
 
 
-@router.post("/upload-csv", response_class=HTMLResponse)
-async def upload_csv(request: Request, file: UploadFile = File(...), db: Session = Depends(get_db)):
-    user = await get_current_user(request)
-    if user is None:
-        return RedirectResponse(url="/auth", status_code=status.HTTP_302_FOUND)
-
-    if not file.filename.endswith('.csv'):
-        return templates.TemplateResponse("error.html", {"request": request, "error": "Invalid file type. Please upload a CSV file."})
-
-    # Read the CSV file into a pandas DataFrame
-    try:
-        df = pd.read_csv(file.file)
-    except Exception as e:
-        return templates.TemplateResponse("error.html", {"request": request, "error": f"Error reading the CSV file: {str(e)}"})
-
-    # Validate the required columns
-    required_columns = ['student_id', 'subject_id', 'teacher_id', 'exam_id', 'exam_date', 'exam_type', 'performance']
-    for col in required_columns:
-        if col not in df.columns:
-            return templates.TemplateResponse("error.html", {"request": request, "error": f"Missing required column: {col}"})
-
-    # Validate data types and performance scores
-    errors = []
-    for index, row in df.iterrows():
-        if not isinstance(row['student_id'], int) or row['student_id'] <= 0:
-            errors.append(f"Invalid student_id at row {index + 1}.")
-        if not isinstance(row['subject_id'], int) or row['subject_id'] <= 0:
-            errors.append(f"Invalid subject_id at row {index + 1}.")
-        if not isinstance(row['teacher_id'], int) or row['teacher_id'] <= 0:
-            errors.append(f"Invalid teacher_id at row {index + 1}.")
-        if not isinstance(row['exam_id'], int) or row['exam_id'] <= 0:
-            errors.append(f"Invalid exam_id at row {index + 1}.")
-        if not isinstance(row['exam_date'], int) or row['exam_date'] <= 0:
-            errors.append(f"Invalid exam_date at row {index + 1}.")
-        if not isinstance(row['exam_type'], str) or not row['exam_type']:
-            errors.append(f"Invalid exam_type at row {index + 1}.")
-        if not (isinstance(row['performance'], int) and 0 <= row['performance'] <= 100):
-            errors.append(f"Invalid performance score at row {index + 1}. Must be between 0 and 100.")
-
-    if errors:
-        return templates.TemplateResponse("error.html", {"request": request, "error": "<br>".join(errors)})
-
-    # If all validations pass, save the records to the database
-    for _, row in df.iterrows():
-        performance_model = Performance(
-            student_id=row['student_id'],
-            subject_id=row['subject_id'],
-            teacher_id=row['teacher_id'],
-            exam_id=row['exam_id'],
-            exam_date=row['exam_date'],
-            exam_type=row['exam_type'],
-            performance=row['performance']
-        )
-        db.add(performance_model)
-
-    db.commit()
-    return RedirectResponse(url="/dashboard", status_code=status.HTTP_302_FOUND)
-
 
 @router.get("/teacher/{teacher_id}/add-performance", response_class=HTMLResponse)
-async def add_performance(request: Request, db: Session = Depends(get_db)):
+async def add_performance(request: Request, db: db_dependency):
     user = await get_current_user(request)
     if user is None:
         return RedirectResponse(url="/auth", status_code=302)
@@ -196,104 +139,111 @@ async def add_performance(request: Request, db: Session = Depends(get_db)):
     return templates.TemplateResponse("add-performance.html", {"request": request, "user": user, "students": students, "subjects": subjects})
 
 @router.post("/teacher/{teacher_id}/add-performance", response_class=HTMLResponse)
-async def create_performance(request: Request, student_id: str = Form(...),
-                             exam_type: str = Form(...), exam_date: str = Form(...),
-                             performance: int = Form(...), teacher_id: int = Path(...), 
-                             db: Session = Depends(get_db)):
-
+async def create_performance(
+    request: Request,
+    exam_type: str = Form(None),
+    teacher_id: int = Path(...),  
+    exam_date: str = Form(None),
+    performance: int = Form(None),
+    file: UploadFile = File(None),
+    db: Session = Depends(get_db)
+):
     user = await get_current_user(request)
     if user is None:
         return RedirectResponse(url="/auth", status_code=status.HTTP_302_FOUND)
 
-    # Convert exam_type to lowercase
-    exam_type = exam_type.lower()
+    csv_errors = []
+    form_errors = []
 
-    # Convert the exam_date to a datetime object
-    try:
-        exam_date = datetime.strptime(exam_date, "%Y-%m-%d").date()
-    except ValueError:
-        # If date format is invalid, return the form with an error message
-        return templates.TemplateResponse("add-performance.html", {
-            "request": request,
-            "msg": "Invalid date format. Use YYYY-MM-DD.",
+    # Handle CSV file upload
+    if file:
+        try:
+            df = pd.read_csv(file.file)
+            required_columns = ['student_id', 'exam_date', 'exam_type', 'performance']
+            missing_columns = [col for col in required_columns if col not in df.columns]
+            if missing_columns:
+                csv_errors.append(f"Missing columns: {', '.join(missing_columns)}")
+
+            for index, row in df.iterrows():
+                student = db.query(models.Students).filter(models.Students.username == row['student_id']).first()
+                teacher = db.query(models.Teachers).filter(models.Teachers.id == teacher_id).first()
+                subject = db.query(models.Subjects).filter(models.Subjects.subject_name == teacher.subjects).first()
+
+                if not student:
+                    csv_errors.append(f"Invalid student_id at row {index + 1}")
+                    continue
+
+                try:
+                    row['exam_date'] = datetime.strptime(row['exam_date'], "%Y-%m-%d").date()
+                except ValueError:
+                    csv_errors.append(f"Invalid exam_date at row {index + 1}. Use YYYY-MM-DD.")
+                    continue
+
+                if not (0 <= row['performance'] <= 100):
+                    csv_errors.append(f"Performance out of range at row {index + 1}")
+                    continue
+
+                # Add the performance record
+                performance_record = models.Performance(
+                    student_id=student.id,
+                    subject_id=subject.id,
+                    student_username=student.username,
+                    subject_name=subject.subject_name,
+                    teacher_id=teacher.id,
+                    exam_type=row['exam_type'],
+                    exam_date=row['exam_date'],
+                    performance=row['performance']
+                )
+                db.add(performance_record)
+
+        except pd.errors.EmptyDataError:
+            csv_errors.append("Uploaded CSV file is empty.")
+        except Exception as e:
+            csv_errors.append(f"An error occurred while processing the file: {str(e)}")
+
+    # Handle manual form submission if no CSV file is provided
+    if not file and exam_type and exam_date and performance is not None:
+        student_id = Form(None)  # Ensure the student_id is available in the form
+        student = db.query(models.Students).filter(models.Students.username == student_id).first()
+        teacher = db.query(models.Teachers).filter(models.Teachers.id == teacher_id).first()
+        subject = db.query(models.Subjects).filter(models.Subjects.subject_name == teacher.subjects).first()
+
+        if not student:
+            form_errors.append("Student not found.")
+
+        try:
+            # Add the performance record
+            performance_model = models.Performance(
+                student_id=student.id,
+                subject_id=teacher.subject_id,
+                student_username=student.username,
+                subject_name=subject.subject_name,
+                teacher_id=teacher.id,
+                exam_type=exam_type,
+                exam_date=datetime.strptime(exam_date, "%Y-%m-%d").date(),
+                performance=performance
+            )
+            db.add(performance_model)
+        except ValueError:
+            form_errors.append("Invalid date format. Use YYYY-MM-DD.")
+
+    # Check if there were any errors during CSV or form processing
+    if csv_errors or form_errors:
+        return templates.TemplateResponse("teachers-page.html", {
+            "request": request, 
+            "msg": "<br>".join(csv_errors + form_errors), 
             "user": user
         })
 
-    # Retrieve student and teacher based on IDs provided
-    student = db.query(models.Students).filter(models.Students.username == student_id).first()
-    teacher = db.query(models.Teachers).filter(models.Teachers.id == teacher_id).first()
+    # Commit to the database if no errors
+    db.commit()
 
-    # Handle not found cases
-    if not student:
-        return templates.TemplateResponse("add-performance.html", {
-            "request": request,
-            "msg": "Student not found.",
-            "user": user
-        })
-    if not teacher:
-        return templates.TemplateResponse("add-performance.html", {
-            "request": request,
-            "msg": "Teacher not found.",
-            "user": user
-        })
-
-    # Fetch the subject using teacher's subject
-    subject = db.query(models.Subjects).filter(models.Subjects.subject_name == teacher.subjects).first()
-    if not subject:
-        return templates.TemplateResponse("add-performance.html", {
-            "request": request,
-            "msg": "Subject not found for the teacher.",
-            "user": user
-        })
-
-    # Create a new performance record
-    performance_model = models.Performance(
-        student_id=student.id,
-        subject_id=subject.id,
-        student_username=student.username,
-        subject_name=subject.subject_name,
-        teacher_id=teacher.id,
-        exam_type=exam_type,
-        exam_date=exam_date,
-        performance=performance
+    # Redirect after successful submission
+    return RedirectResponse(
+        url=f'/dashboard/teacher/{teacher_id}?msg=Performance%20record%20added%20successfully.', 
+        status_code=status.HTTP_302_FOUND
     )
 
-    try:
-        # Add performance to the database
-        db.add(performance_model)
-        db.commit()
-        msg = "Student Performance successfully added!"
-    except Exception as e:
-        # Rollback in case of error and render the template with an error message
-        db.rollback()
-        msg = f"Error occurred: {str(e)}"
-        return templates.TemplateResponse("add-performance.html", {
-            "request": request,
-            "msg": msg,
-            "user": user
-        })
-
-    # On success, redirect to teacher's dashboard with a success message
-    return RedirectResponse(url=f'/dashboard/teacher/{teacher.id}', status_code=status.HTTP_302_FOUND)
-
-
-@router.get("/teacher/{teacher_id}/edit-performance/{performance_id}", response_class=HTMLResponse)
-async def edit_performance(request: Request, performance_id: int, db: db_dependency):
-    user = await get_current_user(request)
-    if user is None:
-        return RedirectResponse(url="/auth", status_code=status.HTTP_302_FOUND)
-
-    # Retrieve the existing performance record
-    performance = db.query(models.Performance).filter(models.Performance.id == performance_id).first()
-
-    if not performance:
-        raise HTTPException(status_code=404, detail="Performance record not found")
-
-    return templates.TemplateResponse("edit-performance.html", {
-        "request": request, 
-        "performance": performance, 
-        "user": user
-    })
 
 
 @router.post("/teacher/{teacher_id}/edit-performance/{performance_id}", response_class=HTMLResponse)
@@ -400,7 +350,7 @@ async def delete_performance(
         db.commit()  
         
         # Redirect to the teacher dashboard after successful deletion
-        return RedirectResponse(url=f'/dashboard/teacher/{teacher_id}', status_code=status.HTTP_302_FOUND)
+        return RedirectResponse(url=f'/dashboard/teacher/{teacher_id}?msg=Performance%20record%20deleted%20successfully.', status_code=status.HTTP_302_FOUND)
     
     except Exception as e:
         db.rollback()  # Rollback in case of error

@@ -1,4 +1,4 @@
-{% include 'layout.html' %}
+{% include 'teachers-layout.html' %}
 
 <div class="container">
     <div class="card text-center">
@@ -6,7 +6,8 @@
             <b>Teacher Dashboard</b>
         </div>
         {% if msg %} 
-           {% if msg == 'Student Performance successfully added!' %}
+           {% if msg == 'Student Performance successfully added!' or msg == 'Performance record deleted successfully.'
+            or msg == 'Performance record added successfully.' or msg_type == 'success' %}
            <div class="alert alert-success" role="alert">
                 {{msg}}
            </div>
