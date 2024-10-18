@@ -244,7 +244,23 @@ async def create_performance(
         status_code=status.HTTP_302_FOUND
     )
 
+@router.get("/teacher/{teacher_id}/edit-performance/{performance_id}", response_class=HTMLResponse)
+async def edit_performance(request: Request, performance_id: int, db: db_dependency):
+    user = await get_current_user(request)
+    if user is None:
+        return RedirectResponse(url="/auth", status_code=status.HTTP_302_FOUND)
 
+    # Retrieve the existing performance record
+    performance = db.query(models.Performance).filter(models.Performance.id == performance_id).first()
+
+    if not performance:
+        raise HTTPException(status_code=404, detail="Performance record not found")
+
+    return templates.TemplateResponse("edit-performance.html", {
+        "request": request, 
+        "performance": performance, 
+        "user": user
+    })
 
 @router.post("/teacher/{teacher_id}/edit-performance/{performance_id}", response_class=HTMLResponse)
 async def edit_performance_commit(request: Request, performance_id: int, student_id: str = Form(...), 
