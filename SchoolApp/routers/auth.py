@@ -160,39 +160,42 @@ async def authentication_page(request: Request):
 async def login(request: Request, db: Session = Depends(get_db)):
     form = LoginForm(request)
     await form.create_oauth_form()
-    
+
+    # Creating OAuth form data from login credentials
     form_data = OAuth2PasswordRequestForm(
-        grant_type=None, 
-        username=form.username, 
-        password=form.password, 
-        scope='', 
-        client_id=None, 
+        grant_type=None,
+        username=form.username,
+        password=form.password,
+        scope='',
+        client_id=None,
         client_secret=None
     )
+    
+    # Authenticate user with provided credentials
     user = authenticate_user(form_data.username, form_data.password, db)
-
+    
     if user is None:
         msg = "Incorrect Username or Password"
-        return templates.TemplateResponse("teacher-login.html", {"request": request, "msg": msg})
-
+        return templates.TemplateResponse("login.html", {"request": request, "msg": msg})
     
-
-    # Authenticate and login user
+    # Redirect user to dashboard after successful login
     response = RedirectResponse(url=f"/dashboard/student/{user.id}", status_code=status.HTTP_302_FOUND)
-
+    
     try:
         validate_user_cookie = await login_for_access_token(response=response, form_data=form_data, db=db)
 
         if not validate_user_cookie:
-            msg = "Incorrect Username or Password"
+            msg = "Authentication failed. Please try again."
             return templates.TemplateResponse("login.html", {"request": request, "msg": msg})
+        
         return response
+
     except HTTPException as e:
         msg = e.detail
-    except Exception:
-        msg = "Unknown Error"
-    return templates.TemplateResponse("login.html", {"request": request, "msg": msg, "user": None})
-
+    except Exception as e:
+        msg = f"Unknown error occurred: {str(e)}"
+    
+    return templates.TemplateResponse("login.html", {"request": request, "msg": msg})
 
 @router.get("/teachers", response_class=HTMLResponse)
 async def authentication_page(request: Request):
