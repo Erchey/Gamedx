@@ -191,7 +191,7 @@ async def login(request: Request, db: Session = Depends(get_db)):
         msg = e.detail
     except Exception:
         msg = "Unknown Error"
-    return templates.TemplateResponse("login.html", {"request": request, "msg": msg})
+    return templates.TemplateResponse("login.html", {"request": request, "msg": msg, "user": None})
 
 
 @router.get("/teachers", response_class=HTMLResponse)
