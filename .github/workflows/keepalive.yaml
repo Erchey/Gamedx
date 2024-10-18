@@ -28,4 +28,4 @@ jobs:
 
       - name: Keep the database alive
         run: |
-          python3 ../SchoolApp/keepalive.py
+          python3 ./SchoolApp/keepalive.py
