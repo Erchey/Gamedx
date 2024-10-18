@@ -3,6 +3,7 @@ name: Keep Server and Database Alive
 on:
   schedule:
     - cron: "*/15 * * * *"  
+  workflow_dispatch:
 
 jobs:
   keep-alive:
