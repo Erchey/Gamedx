@@ -1,5 +1,10 @@
+import os
 import psycopg2
-from SchoolApp.database import DATABASE_URL
+from dotenv import load_dotenv
+
+load_dotenv(dotenv_path='keys.env')
+
+DATABASE_URL = os.getenv('SQLALCHEMY_DATABASE_URL')
 
 def keep_database_alive():
     # Use your actual connection string
