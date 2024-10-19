@@ -1,5 +1,5 @@
 import psycopg2
-from database import DATABASE_URL
+from ...SchoolApp.database import DATABASE_URL
 
 def keep_database_alive():
     # Use your actual connection string
