@@ -26,6 +26,8 @@ jobs:
         run: |
           curl -X GET https://gamedx.onrender.com/
 
+      - name: Echo SQLALCHEMY_DATABASE_URL
+        run: echo $SQLALCHEMY_DATABASE_URL
       - name: Test database connection
         run: |
           python -c "
