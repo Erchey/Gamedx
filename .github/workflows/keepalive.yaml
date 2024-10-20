@@ -30,14 +30,14 @@ jobs:
           curl -X GET https://gamedx.onrender.com/
 
       - name: Echo SQLALCHEMY_DATABASE_URL
-        run: echo $SQLALCHEMY_DATABASE_URL
+        run: echo ${{ secrets.SQLALCHEMY_DATABASE_URL }}
 
       - name: Test database connection
         run: |
           python -c "
           import psycopg2
           import os
-          conn = psycopg2.connect(os.getenv('SQLALCHEMY_DATABASE_URL'))
+          conn = psycopg2.connect(os.getenv('${{ secrets.SQLALCHEMY_DATABASE_URL }}'))
           print('Connected to DB successfully')
           "
 
