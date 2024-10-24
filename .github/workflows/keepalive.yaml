@@ -8,8 +8,6 @@ on:
 jobs:
   keep-alive:
     runs-on: ubuntu-latest
-    env:  
-      SQLALCHEMY_DATABASE_URL: ${{ secrets.SQLALCHEMY_DATABASE_URL }}
 
     steps:
       - name: Check out the repository
@@ -29,8 +27,29 @@ jobs:
         run: |
           curl -X GET https://gamedx.onrender.com/
 
-      - name: Echo SQLALCHEMY_DATABASE_URL
-        run: echo $SQLALCHEMY_DATABASE_URL
+      - name: Verify if SQLALCHEMY_DATABASE_URL is set
+        run: |
+          if [ -z "$SQLALCHEMY_DATABASE_URL" ]; then
+            echo "SQLALCHEMY_DATABASE_URL is not set.";
+          else
+            echo "SQLALCHEMY_DATABASE_URL is set.";
+          fi
+        env:
+          SQLALCHEMY_DATABASE_URL: ${{ secrets.SQLALCHEMY_DATABASE_URL }}
 
+      - name: Test database connection
+        run: |
+          python -c "
+          import psycopg2
+          import os
+          conn = psycopg2.connect(os.getenv('SQLALCHEMY_DATABASE_URL'))
+          print('Connected to DB successfully')
+          "
+        env:
+          SQLALCHEMY_DATABASE_URL: ${{ secrets.SQLALCHEMY_DATABASE_URL }}
 
-     
+      - name: Keep the database alive
+        run: |
+          python3 ./keepalive.py
+        env:
+          SQLALCHEMY_DATABASE_URL: ${{ secrets.SQLALCHEMY_DATABASE_URL }}
