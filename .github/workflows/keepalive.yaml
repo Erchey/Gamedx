@@ -29,9 +29,5 @@ jobs:
         run: |
           curl -X GET https://gamedx.onrender.com/
 
-      - name: Echo SQLALCHEMY_DATABASE_URL
-        run: echo $SQLALCHEMY_DATABASE_URL
 
-      - name: Keep the database alive
-        run: |
-          python3 ./keepalive.py
+     
