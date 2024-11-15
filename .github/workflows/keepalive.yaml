@@ -8,8 +8,6 @@ on:
 jobs:
   keep-alive:
     runs-on: ubuntu-latest
-    env:  # Set environment variable globally for the job
-      SQLALCHEMY_DATABASE_URL: ${{ secrets.SQLALCHEMY_DATABASE_URL }}
 
     steps:
       - name: Check out the repository
@@ -29,5 +27,13 @@ jobs:
         run: |
           curl -X GET https://gamedx.onrender.com/
 
+      - name: Verify if SQLALCHEMY_DATABASE_URL is set
+        run: |
+          if [ -z "$SQLALCHEMY_DATABASE_URL" ]; then
+            echo "SQLALCHEMY_DATABASE_URL is not set.";
+          else
+            echo "SQLALCHEMY_DATABASE_URL is set.";
+          fi
+        env:
+          SQLALCHEMY_DATABASE_URL: ${{ secrets.SQLALCHEMY_DATABASE_URL }}
 
-     
